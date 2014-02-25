@@ -31,18 +31,17 @@ rm -rf $tempdir
 mkdir -p $tempdir
 cd $tempdir
 
-im_local_path=$tempdir/imagemagick-${IMAGE_MAGICK_VERSION}.tgz
-
-libpng_local_path=$tempdir/libpng-${LIBPNG_VERSION}.tgz
 
 echo ">>> Downloading libpng sources"
 
 libpng_sources=$tempdir/libpng-${LIBPNG_VERSION}.tar.gz
-curl ftp://ftp.simplesystems.org/pub/libpng/png/src/libpng16/libpng-${LIBPNG_VERSION}.tar.gz > $libpng_sources
+curl "http://f.cl.ly/items/060P421e2Q3S3A0s2j3l/libpng-${LIBPNG_VERSION}.tar.gz" > $libpng_sources
 
 tar -C $tempdir -x -z -f $libpng_sources
 
 echo ">>> Building libpng"
+
+libpng_local_path=$tempdir/libpng-${LIBPNG_VERSION}.tgz
 
 # build and package libpng for heroku
 vulcan build -v \
@@ -61,16 +60,15 @@ $basedir/aws/s3 put $S3_BUCKET $LIBPNG_REMOTE_PATH $libpng_local_path
 #####  NOTE restart heroku app or it will crash:   heroku restart --app <your_app_name>
 echo "restarting vulcan app"
 heroku restart --app $VULCAN_HEROKU_APP_NAME
-sleep 10
+sleep 5
 
 ## >>>> Download, build and upload libwebp to s3 
 libwebp_local_path=$tempdir/libwebp-${LIBWEBP_VERSION}.tgz
-libwebp_sources=$tempdir/libwebp-${LIBWEBP_VERSION}.tar.gz
 
 echo ">>> Downloading libwebp sources"
 
 libwebp_sources=$tempdir/libwebp-${LIBWEBP_VERSION}.tar.gz
-curl "http://www.imagemagick.org/download/delegates/libwebp-${LIBWEBP_VERSION}.tar.gz" > $libwebp_sources
+curl "http://f.cl.ly/items/1M3g2H0b3R3R1F3X3x2G/libwebp-${LIBWEBP_VERSION}.tar.gz" > $libwebp_sources
 
 tar -C $tempdir -x -z -f $libwebp_sources
 
@@ -91,21 +89,37 @@ $basedir/aws/s3 put $S3_BUCKET $LIBWEBP_REMOTE_PATH $libwebp_local_path
 #####  NOTE restart heroku app or it will crash:   heroku restart --app <your_app_name>
 echo "restarting vulcan app"
 heroku restart --app $VULCAN_HEROKU_APP_NAME
-sleep 10
+sleep 5
 
 
 ## >>>> Download, build and upload ImageMagick to s3
-echo ">>> Building imagemagick"
+echo ">>> Downloading imagemagick sources"
 
-# http://cl.ly/3V2D2S1I1j2V/ImageMagick-0.1.2.tar.gz
+# # make a temp directory
+# tempdir="$( mktemp -t imagemagick_XXXX )"
+# rm -rf $tempdir
+# mkdir -p $tempdir
+# cd $tempdir
+
+im_local_path=$tempdir/ImageMagick-${IMAGE_MAGICK_VERSION}.tgz
+
+im_sources=$tempdir/ImageMagick-${IMAGE_MAGICK_VERSION}.tar.gz
+curl "http://f.cl.ly/items/1W241x3R452v3p1q0M3d/ImageMagick-${IMAGE_MAGICK_VERSION}.tar.gz" > $im_sources
+
+tar -C $tempdir -x -z -f $im_sources
+rm $im_sources
+mv $tempdir/ImageMagick-* $tempdir/ImageMagick-$IMAGE_MAGICK_VERSION
+
+echo ">>> Building imagemagick"
 
 # build and package imagemagick for heroku
 vulcan build -v \
-  -s "http://www.imagemagick.org/download/ImageMagick-${IMAGE_MAGICK_VERSION}.tar.gz" \
-  -n imagemagick \
-  -c "cd ImageMagick-${IMAGE_MAGICK_VERSION} && ./configure --prefix=/app/vendor/imagemagick && make install" \
+  -s $tempdir/ImageMagick-${IMAGE_MAGICK_VERSION} \
+  -n imagemagick \  
   -o $im_local_path \
   --deps "http://s3.amazonaws.com/my-heroku-buildpack-imagemagick/libpng-1.6.9.tgz" "https://s3.amazonaws.com/my-heroku-buildpack-imagemagick/libwebp-0.3.1.tgz"
+
+#-c "cd ImageMagick-${IMAGE_MAGICK_VERSION} && ./configure --prefix=/app/vendor/imagemagick && make install" \
 
 echo ">>> Uploading image magick artifact"
 echo "    to ${S3_BUCKET}/${REMOTE_PATH}"
