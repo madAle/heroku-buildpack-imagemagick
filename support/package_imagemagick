@@ -19,6 +19,10 @@ if [ "$S3_BUCKET" == "" ]; then
   exit 1
 fi
 
+echo "restarting vulcan app"
+heroku restart --app $VULCAN_HEROKU_APP_NAME
+sleep 5
+
 basedir="$( cd -P "$( dirname "$0" )" && pwd )"
 
 # make a temp directory
@@ -57,6 +61,7 @@ $basedir/aws/s3 put $S3_BUCKET $LIBPNG_REMOTE_PATH $libpng_local_path
 #####  NOTE restart heroku app or it will crash:   heroku restart --app <your_app_name>
 echo "restarting vulcan app"
 heroku restart --app $VULCAN_HEROKU_APP_NAME
+sleep 10
 
 ## >>>> Download, build and upload libwebp to s3 
 libwebp_local_path=$tempdir/libwebp-${LIBWEBP_VERSION}.tgz
@@ -92,13 +97,15 @@ sleep 10
 ## >>>> Download, build and upload ImageMagick to s3
 echo ">>> Building imagemagick"
 
+# http://cl.ly/3V2D2S1I1j2V/ImageMagick-0.1.2.tar.gz
+
 # build and package imagemagick for heroku
 vulcan build -v \
   -s "http://www.imagemagick.org/download/ImageMagick-${IMAGE_MAGICK_VERSION}.tar.gz" \
   -n imagemagick \
   -c "cd ImageMagick-${IMAGE_MAGICK_VERSION} && ./configure --prefix=/app/vendor/imagemagick && make install" \
   -o $im_local_path \
-  --deps $LIBPNG_REMOTE_PATH $LIBWEBP_REMOTE_PATH
+  --deps "http://s3.amazonaws.com/my-heroku-buildpack-imagemagick/libpng-1.6.9.tgz" "https://s3.amazonaws.com/my-heroku-buildpack-imagemagick/libwebp-0.3.1.tgz"
 
 echo ">>> Uploading image magick artifact"
 echo "    to ${S3_BUCKET}/${REMOTE_PATH}"
