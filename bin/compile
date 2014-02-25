@@ -42,13 +42,30 @@ echo "Installing libpng $LIBPNG_VERSION" | arrow
 
 # vendor directories
 VENDORED_LIBPNG="$(mktmpdir libpng)"
-package_download "${REMOTE_PATH}" "${VENDORED_LIBPNG}"
+package_download "${LIBPNG_REMOTE_PATH}" "${VENDORED_LIBPNG}"
 
 echo "Download completed" | indent
 
 cp -R $VENDORED_LIBPNG/lib/* $lib_path
 
 echo "Installation completed" | indent
+
+## Install libwebp
+
+echo "Installing libwebp $LIBWEBP_VERSION" | arrow
+
+# vendor directories
+VENDORED_LIBWEBP="$(mktmpdir libwebp)"
+package_download "${LIBWEBP_REMOTE_PATH}" "${VENDORED_LIBWEBP}"
+
+echo "Download completed" | indent
+
+cp -R $VENDORED_LIBWEBP/lib/* $lib_path
+
+echo "Installation completed" | indent
+
+
+## Install imagemagick
 
 echo "Installing imagemagick $IMAGE_MAGICK_VERSION" | arrow
 

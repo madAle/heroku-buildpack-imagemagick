@@ -54,7 +54,7 @@ echo "    from ${libpng_local_path}"
 
 $basedir/aws/s3 put $S3_BUCKET $LIBPNG_REMOTE_PATH $libpng_local_path
 
-#####  NOTE restart heroku app or it will crash:   heroku restart --app fancy-builderver
+#####  NOTE restart heroku app or it will crash:   heroku restart --app <your_app_name>
 echo "restarting vulcan app"
 heroku restart --app $VULCAN_HEROKU_APP_NAME
 
@@ -83,9 +83,10 @@ echo "    from ${libwebp_local_path}"
 
 $basedir/aws/s3 put $S3_BUCKET $LIBWEBP_REMOTE_PATH $libwebp_local_path
 
-#####  NOTE restart heroku app or it will crash:   heroku restart --app fancy-builderver
+#####  NOTE restart heroku app or it will crash:   heroku restart --app <your_app_name>
 echo "restarting vulcan app"
 heroku restart --app $VULCAN_HEROKU_APP_NAME
+sleep 10
 
 
 ## >>>> Download, build and upload ImageMagick to s3
@@ -97,7 +98,7 @@ vulcan build -v \
   -n imagemagick \
   -c "cd ImageMagick-${IMAGE_MAGICK_VERSION} && ./configure --prefix=/app/vendor/imagemagick && make install" \
   -o $im_local_path \
-  --deps $LIBPNG_REMOTE_PATH
+  --deps $LIBPNG_REMOTE_PATH $LIBWEBP_REMOTE_PATH
 
 echo ">>> Uploading image magick artifact"
 echo "    to ${S3_BUCKET}/${REMOTE_PATH}"
